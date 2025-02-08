@@ -11,9 +11,9 @@ class JsGEDCOM {
 
 
   constructor() {
-    this._head = {};
-    this._submitter = '';
     // Official objects
+    this._head = {};
+    this._submitters = {};
     this._individuals = {};
     this._families = {};
     this._notes = {};
@@ -58,7 +58,7 @@ class JsGEDCOM {
     if (splittedLine[1] === 'HEAD') {
       this._head = elements;
     } else if (splittedLine[2] === 'SUBM') {
-      this._submitter = lines[startIdx + 1].split('NAME ')[1];
+      this._submitters = elements;
     }  else if (splittedLine[2] === 'INDI') {
       this._individuals[`${splittedLine[1].replaceAll('@', '')}`] = elements;
     } else if (splittedLine[2] === 'FAM') {
