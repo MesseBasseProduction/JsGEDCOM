@@ -1,0 +1,32 @@
+{
+  "name": "jsgedcom",
+  "version": "0.0.1",
+  "description": " A JavaScript GEDCOM parser",
+  "keywords": [],
+  "main": "src/JsGEDCOM.js",
+  "scripts": {
+    "build": "webpack --config webpack/webpack.prod.js ",
+    "watch": "webpack --watch --config webpack/webpack.dev.js"
+  },
+  "homepage": "https://github.com/MesseBasseProduction/JsGEDCOM",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MesseBasseProduction/JsGEDCOM.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MesseBasseProduction/JsGEDCOM/issues"
+  },
+  "author": "Arthur Beaulieu",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "@babel/core": "^7.26.8",
+    "@babel/preset-env": "^7.26.8",
+    "babel-loader": "^9.2.1",
+    "clean-webpack-plugin": "^4.0.0",
+    "eslint": "^9.20.0",
+    "eslint-webpack-plugin": "^4.2.0",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-merge": "^6.0.1"
+  }
+}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr" style="font-family: sans-serif; height: 100vh; width: 100vw;">
+<head>
+  <meta charset="utf-8"/>
+  <title>JsGEDCOM</title>
+  <meta content="ie=edge" http-equiv="x-ua-compatible"/>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+  <meta content="initial-scale=1" name="viewport"/>
+  <meta name="description" content="TODO">
+</head>
+<body style="align-items: center; display: flex; height: 100vh; justify-content: center; margin: 0; width: 100vw;">
+  <div style="background-color: rgba(0, 0, 0, .1); border-radius: 6pt; padding: 24px; text-align: center;">
+    <h1 style="margin: 0; margin-bottom: 24px;">JsGEDCOM</h1>
+    <input type="file" id="file-input">
+  </div>
+  <script type="text/javascript" src="./dist/JsGEDCOM.bundle.js"></script>
+  <script type="text/javascript">
+    const GEDCOM = new JsGEDCOM();
+    document.getElementById('file-input').addEventListener('change', e => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        GEDCOM.parseGedcom(reader.result);
+      };
+
+      if (e.target.files[0]) {
+        reader.readAsText(e.target.files[0]);
+      }
+    });
+  </script>
+</body>
+</html>
