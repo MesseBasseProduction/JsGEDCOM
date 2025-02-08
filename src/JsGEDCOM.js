@@ -13,7 +13,8 @@ class JsGEDCOM {
   constructor() {
     // Official objects
     this._head = {};
-    this._submitters = {};
+    this._submissions = {};    
+    this._submitters = {};    
     this._individuals = {};
     this._families = {};
     this._notes = {};
@@ -25,6 +26,7 @@ class JsGEDCOM {
     this._places = {};
     // Raw gedcom data
     this._gedcom = null;
+    this._lines = [];
   }
 
 
@@ -33,17 +35,30 @@ class JsGEDCOM {
 
   parseGedcom(gedcom) {
     // Sanitize line by removing chariot returns and splitting by lines
-    this._gedcom = gedcom.replace(/[\r]+/g, '');
-    const lines = this._gedcom.split('\n');
+    this._storeGedcom(gedcom);
     // Iterate through all lines to detect items
-    for (let i = 0; i < lines.length; ++i) {
-      const lineElements = lines[i].split(' ');
+    for (let i = 0; i < this._lines.length; ++i) {
+      const lineElements = this._lines[i].split(' ');
       // New item detected, inner iterate to retrieve all info for current item
       if (lineElements[0] === '0') {
-        i = this._newTopItem(lines, i);
+        i = this._newTopItem(this._lines, i);
       }
     }
-    console.log(this)
+    console.log(this);
+  }
+
+
+  _storeGedcom(gedcom) {
+    if (gedcom.indexOf('\r\n') !== -1) { // CLF and LF
+      this._gedcom = gedcom.replace(/[\r]+/g, '');
+      this._lines = this._gedcom.split('\n');
+    } else if (gedcom.indexOf('\r') === -1 && gedcom.indexOf('\n') !== -1) { // Some LF
+      this._gedcom = gedcom;
+      this._lines = this._gedcom.split('\n');
+    } else { // C
+      this._gedcom = gedcom;
+      this._lines = this._gedcom.split('\r');
+    }
   }
 
 
@@ -57,6 +72,8 @@ class JsGEDCOM {
 
     if (splittedLine[1] === 'HEAD') {
       this._head = elements;
+    } else if (splittedLine[2] === 'SUBN') {
+      this._submissions = elements;
     } else if (splittedLine[2] === 'SUBM') {
       this._submitters = elements;
     }  else if (splittedLine[2] === 'INDI') {
