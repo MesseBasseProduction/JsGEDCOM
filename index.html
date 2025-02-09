@@ -19,7 +19,7 @@
     document.getElementById('file-input').addEventListener('change', e => {
       const reader = new FileReader();
       reader.onload = () => {
-        GEDCOM.parseGedcom(reader.result);
+        GEDCOM.loadGedcom(reader.result);
       };
 
       if (e.target.files[0]) {

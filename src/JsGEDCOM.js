@@ -33,22 +33,26 @@ class JsGEDCOM {
   /* GEDCOM partsing */
 
 
-  parseGedcom(gedcom) {
+  loadGedcom(gedcom) {
+    this._parseGedcom(gedcom);
+  }
+
+
+  _parseGedcom(gedcom) {
     // Sanitize line by removing chariot returns and splitting by lines
-    this._storeGedcom(gedcom);
+    this.__formatRawGedcom(gedcom);
     // Iterate through all lines to detect items
     for (let i = 0; i < this._lines.length; ++i) {
       const lineElements = this._lines[i].split(' ');
       // New item detected, inner iterate to retrieve all info for current item
       if (lineElements[0] === '0') {
-        i = this._newTopItem(this._lines, i);
+        i = this.__newTopItem(this._lines, i);
       }
     }
-    console.log(this);
   }
 
 
-  _storeGedcom(gedcom) {
+  __formatRawGedcom(gedcom) {
     if (gedcom.indexOf('\r\n') !== -1) { // CLF and LF
       this._gedcom = gedcom.replace(/[\r]+/g, '');
       this._lines = this._gedcom.split('\n');
@@ -62,7 +66,7 @@ class JsGEDCOM {
   }
 
 
-  _newTopItem(lines, startIdx) {
+  __newTopItem(lines, startIdx) {
     // The startx id correspond to the level line
 
     // This method must return the next id to parse
@@ -164,6 +168,11 @@ class JsGEDCOM {
       }
     }
 
+  }
+
+
+  _buildRelations() {
+    console.log(this);
   }
 
 
