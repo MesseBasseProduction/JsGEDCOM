@@ -1,7 +1,8 @@
 import GedcomEnum from "./GedcomEnum";
+import EventsEnum from "./EventsEnum";
 
 
-// GEDCOM v7
+// GEDCOM v7 - v5.5.1 are supported here
 // https://gedcom.io/specifications/FamilySearchGEDCOMv7.html
 // https://gedcom.io/specifications/FamilySearchGEDCOMv7.pdf
 // https://gedcom.io/specs/
@@ -11,6 +12,8 @@ class JsGEDCOM {
 
 
   constructor() {
+    // TODO handle options lineBreak and version
+
     // Official objects
     this._head = {};
     this._submissions = {};    
@@ -24,6 +27,7 @@ class JsGEDCOM {
     // Additionnal, unspecified ones
     this._events = {};
     this._places = {};
+    this._citations = {};
     // Raw gedcom data
     this._gedcom = null;
     this._lines = [];
@@ -35,10 +39,21 @@ class JsGEDCOM {
 
   loadGedcom(gedcom) {
     this._parseGedcom(gedcom);
+    console.log(this)
   }
 
 
   _parseGedcom(gedcom) {
+    // GEDCOM parsing occur in few steps :
+    // Sanitize line breaks, split raw data into lines to be read
+    // Then we opted for recurive parsing :
+    // For each level-0 structure met, we call __newStructure()
+    // method, which will return the next line index leading to
+    // the next level 0 structure.
+    // In te meantime, we parse this level 0 structure, by splitting
+    // interval into bound, for each levels deeper than 0, and recusively to each
+    // level deeper etc.
+
     // Sanitize line by removing chariot returns and splitting by lines
     this.__formatRawGedcom(gedcom);
     // Iterate through all lines to detect items
@@ -46,27 +61,27 @@ class JsGEDCOM {
       const lineElements = this._lines[i].split(' ');
       // New item detected, inner iterate to retrieve all info for current item
       if (lineElements[0] === '0') {
-        i = this.__newTopItem(this._lines, i);
+        i = this.__newStructure(this._lines, i);
       }
     }
   }
 
 
   __formatRawGedcom(gedcom) {
-    if (gedcom.indexOf('\r\n') !== -1) { // CLF and LF
+    if (gedcom.indexOf('\r\n') !== -1) { // CR LF
       this._gedcom = gedcom.replace(/[\r]+/g, '');
       this._lines = this._gedcom.split('\n');
-    } else if (gedcom.indexOf('\r') === -1 && gedcom.indexOf('\n') !== -1) { // Some LF
+    } else if (gedcom.indexOf('\r') === -1 && gedcom.indexOf('\n') !== -1) { // LF
       this._gedcom = gedcom;
       this._lines = this._gedcom.split('\n');
-    } else { // C
+    } else { // CR
       this._gedcom = gedcom;
       this._lines = this._gedcom.split('\r');
     }
   }
 
 
-  __newTopItem(lines, startIdx) {
+  __newStructure(lines, startIdx) {
     // The startx id correspond to the level line
 
     // This method must return the next id to parse
@@ -79,19 +94,19 @@ class JsGEDCOM {
     } else if (splittedLine[2] === 'SUBN') {
       this._submissions = elements;
     } else if (splittedLine[2] === 'SUBM') {
-      this._submitters = elements;
+      this._submitters[`${splittedLine[1]}`] = elements;
     }  else if (splittedLine[2] === 'INDI') {
-      this._individuals[`${splittedLine[1].replaceAll('@', '')}`] = elements;
+      this._individuals[`${splittedLine[1]}`] = elements;
     } else if (splittedLine[2] === 'FAM') {
-      this._families[`${splittedLine[1].replaceAll('@', '')}`] = elements;
+      this._families[`${splittedLine[1]}`] = elements;
     } else if (splittedLine[2] === 'NOTE') {
-      this._notes[`${splittedLine[1].replaceAll('@', '')}`] = elements;
+      this._notes[`${splittedLine[1]}`] = elements;
     } else if (splittedLine[2] === 'SOUR') {
-      this._sources[`${splittedLine[1].replaceAll('@', '')}`]= elements;
+      this._sources[`${splittedLine[1]}`]= elements;
     } else if (splittedLine[2] === 'REPO') {
-      this._repositories[`${splittedLine[1].replaceAll('@', '')}`] = elements;
+      this._repositories[`${splittedLine[1]}`] = elements;
     } else if (splittedLine[2] === 'OBJE') {
-      this._objects[`${splittedLine[1].replaceAll('@', '')}`] = elements;
+      this._objects[`${splittedLine[1]}`] = elements;
     } else if (splittedLine[1] === 'TRLR') {
       // EOF reached, returning length to break main loop
       return lines.length;
@@ -132,22 +147,46 @@ class JsGEDCOM {
     for (let i = 0; i < boundIdx.length - 1; ++i) {
       const line = lines[boundIdx[i]];
       const itemRawKey = line.split(' ')[1];
-      const itemKey = GedcomEnum[itemRawKey];
       const itemValue = line.split(`${itemRawKey} `)[1];
+      let itemKey = GedcomEnum[itemRawKey];
 
       if (itemKey === undefined) {
-        console.log(itemRawKey, i)          
+        console.warn(`Non-standard item tag met on line ${boundIdx[i] + 1} : ${itemRawKey}`);
+        itemKey = itemRawKey;
       }
 
       if (boundIdx[i + 1] - boundIdx[i] === 1 || boundIdx[i + 1] === undefined) { // No deeper child element, creating and assigning value
         this.__setItemValue(item, itemKey, itemValue);
       } else { // Element as deeper child, recursive call
         item[itemKey] = {};
-        if (itemValue !== undefined) { // Create children item if current level as a value
-          item[itemKey][itemKey] = itemValue;
+        // Well OK, no recursive call until CONT/CONC found on next line
+        let nextItemRawKey = lines[boundIdx[i] + 1].split(' ')[1];
+        if (nextItemRawKey === 'CONT' || nextItemRawKey === 'CONC') {
+          item[itemKey] = itemValue;
+          let iterator = 1;
+          while (nextItemRawKey === 'CONT' || nextItemRawKey === 'CONC') {
+            let nextItemValue = lines[boundIdx[i] + iterator].split(`${nextItemRawKey} `)[1];
+            item[itemKey] += `${(nextItemRawKey === 'CONT') ? '' : '\n'}${nextItemValue}`;
+            ++iterator;
+            nextItemRawKey = lines[boundIdx[i] + iterator].split(' ')[1];
+          }
+        } else {
+          if (itemValue !== undefined) { // Create children item if current level as a value
+            item[itemKey][itemKey] = itemValue;
+          }
+  
+          // Recursive call, one depth further, between bounds
+          const subElement = this.__extractItemValuesFromLines(lines, depth + 1, boundIdx[i], boundIdx[i + 1]);
+          Object.assign(item[itemKey], subElement);
+          // Met a place sub element, check in saved places
+          if (itemRawKey === 'PLAC') {
+            item[itemKey] = this.__appendNonStandardElement(item[itemKey], this._places, 'P');
+          } else if (itemRawKey === 'SOUR') {
+            item[itemKey] = this.__appendNonStandardElement(item[itemKey], this._citations, 'C');
+          } else if (EventsEnum.indexOf(itemRawKey) !== -1) {
+            item[itemKey] = this.__appendNonStandardElement(item[itemKey], this._events, 'E');
+          }
         }
-        // Recursive call, one depth further, between bounds
-        Object.assign(item[itemKey], this.__extractItemValuesFromLines(lines, depth + 1, boundIdx[i], boundIdx[i + 1]));
       }
     }
 
@@ -171,8 +210,31 @@ class JsGEDCOM {
   }
 
 
-  _buildRelations() {
-    console.log(this);
+  __appendNonStandardElement(subElement, target, indicator) {
+    const keys = Object.keys(target);
+    let hasMatch = false;
+    let reference = `@${indicator}00000@`; // Defaults to first value
+    for (let i = 0; i < keys.length; ++i) {
+      if (JSON.stringify(subElement) === JSON.stringify(target[keys[i]])) {
+        hasMatch = true;
+        reference = keys[i];
+        break;
+      }
+    }
+    // No matching element, place can be added into saved ones
+    if (!hasMatch) {
+      // Some places already exists
+      if (keys.length > 0) {
+        let key = keys[keys.length - 1].replace('@', '').replace(indicator, '');
+        key = parseInt(key) + 1;
+        reference = `@${indicator}${('00000' + key).slice(-5)}@`;
+        target[reference] = subElement;
+      } else {
+        target[reference] = subElement;
+      }
+    }
+
+    return reference;
   }
 
 
@@ -183,6 +245,57 @@ class JsGEDCOM {
     if (this._gedcom) {
       // TODO
     }
+  }
+
+
+  /* Getters */
+
+  get head() {
+    return this._head;
+  }
+
+  get submissions() {
+    return this._submissions;
+  }
+
+  get submitters() {
+    return this._submitters;
+  }
+
+  get individuals() {
+    return this._individuals;
+  }
+
+  get families() {
+    return this._families;
+  }
+
+  get notes() {
+    return this._notes;
+  }
+
+  get sources() {
+    return this._sources;
+  }
+
+  get repositories() {
+    return this._repositories;
+  }
+
+  get objects() {
+    return this._objects;
+  }
+
+  get citations() {
+    return this._citations;
+  }
+
+  get events() {
+    return this._events;
+  }
+
+  get places() {
+    return this._places;
   }
 
 
