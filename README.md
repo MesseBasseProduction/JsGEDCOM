@@ -15,7 +15,7 @@ For standard usage, add in your HTML file the following include :
 Then, in your JavaScript file, you can instantiate a new JsGEDCOM object using :
 ```Javascript
 const jsGedcom = new JsGEDCOM({
-  lineBreak: 'LF' // Linebreak type used when exporting GEDCOM in 'CR' or 'CR LF' or 'LF',
+  lineBreak: 'LF', // Linebreak type used when exporting GEDCOM in 'CR' or 'CR LF' or 'LF',
   version: '7' // GEDCOM output version in '7' or '5'
 });
 ```
