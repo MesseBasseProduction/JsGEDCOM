@@ -2,7 +2,7 @@
 
 A JavaScript GEDCOM parser, supporting GEDCOM v5.5 and v7.0.
 
-It is able to parse an input according to the GEDCOM specification (see specifications on the official GEDCOM website : [https://gedcom.io/specs/](https://gedcom.io/specs/)), and also enhance output by adding non-standard objects for internal treatment, such as citations, events, places (Gramps user might be familiar with such elements). One can also export again this parsed GEDCOM to a new `.ged` file.
+It is able to parse an input according to the GEDCOM specification (see specifications on the official [GEDCOM website](https://gedcom.io/specs/)), and also enhance output by adding non-standard objects for internal treatment, such as citations, events, places (Gramps user might be familiar with such elements). One can also export again this parsed GEDCOM to a new `.ged` file.
 
 ## Usage
 
