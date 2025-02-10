@@ -12,6 +12,7 @@
   <div style="background-color: rgba(0, 0, 0, .1); border-radius: 6pt; padding: 24px; text-align: center;">
     <h1 style="margin: 0; margin-bottom: 24px;">JsGEDCOM</h1>
     <input type="file" id="file-input">
+    <button id="export-gedcom">Exporter</button>
   </div>
   <script type="text/javascript" src="./dist/JsGEDCOM.bundle.js"></script>
   <script type="text/javascript">
@@ -26,6 +27,10 @@
         reader.readAsText(e.target.files[0]);
       }
     });
+
+    document.getElementById('export-gedcom').addEventListener('click', () => {
+      GEDCOM.exportGedcom();
+    })
   </script>
 </body>
 </html>

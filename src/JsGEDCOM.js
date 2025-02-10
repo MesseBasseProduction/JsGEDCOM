@@ -242,10 +242,127 @@ class JsGEDCOM {
 
 
   exportGedcom() {
-    if (this._gedcom) {
-      // TODO
+    if (!this._gedcom) {
+      console.error('No GEDCOM loaded')
+      return;
     }
+
+    let output = '0 HEAD';
+    // Build HEAD
+    output += this.__flattenObject(this._head, 1);
+    let keys = Object.keys(this._submissions); // Only v5
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} SUBN`;
+      output += this.__flattenObject(this._submissions[keys[i]], 1);
+    }
+    keys = Object.keys(this._submitters);
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} SUBM`;
+      output += this.__flattenObject(this._submitters[keys[i]], 1);
+    }
+    keys = Object.keys(this._individuals);
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} INDI`;
+      output += this.__flattenObject(this._individuals[keys[i]], 1);
+    }
+    keys = Object.keys(this._families);
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} FAM`;
+      output += this.__flattenObject(this._families[keys[i]], 1);
+    }
+    keys = Object.keys(this._notes);
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} NOTE`;
+      output += this.__flattenObject(this._notes[keys[i]], 1);
+    }
+    keys = Object.keys(this._sources);
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} SOUR`;
+      output += this.__flattenObject(this._sources[keys[i]], 1);
+    }
+    keys = Object.keys(this._repositories);
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} REPO`;
+      output += this.__flattenObject(this._repositories[keys[i]], 1);
+    }
+    keys = Object.keys(this._objects);
+    for (let i = 0; i < keys.length; ++i) {
+      output += `\n0 ${keys[i]} OBJE`;
+      output += this.__flattenObject(this._objects[keys[i]], 1);
+    }
+
+    output += '\n0 TRLR\n';
+    console.log(output);
+    return output;
   }
+
+
+  __flattenObject(object, depth) {
+    // Internal method to check if a given key requires a specific treatment to retrieve value
+    // To be more specific, is a reference to an internal object that must be built again here
+    const isLinkedValue = (key) => {
+      if (['SOUR'].indexOf(key) !== -1 || EventsEnum.indexOf(key) !== -1) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+    // Internal method to retrieve all data from a linked value
+    const getLinkedValue = (key, val) => {
+      let linkedValue = '';
+      if (key === 'SOUR') { // Reading from source and buid specific object
+        const source = this._citations[val];
+        if (source !== undefined) { // Citation indeed pointing to a source
+          if (source.source) {
+            linkedValue += `\n${depth} SOUR ${source.source}`;
+            delete source.source;
+          } else {
+            linkedValue += `\n${depth} SOUR`;
+          }
+          linkedValue += this.__flattenObject(source, depth + 1);
+        } else {
+          linkedValue += `\n${depth} SOUR ${val}`;
+        }
+      } else if (EventsEnum.indexOf(key) !== -1) {
+        const event = this._events[val];
+        if (event !== undefined) { // Citation indeed pointing to a source
+          linkedValue += `\n${depth} ${key}`;
+          linkedValue += this.__flattenObject(event, depth + 1);
+        } else {
+          linkedValue += `\n${depth} ${key} ${val}`;
+        }
+      }
+      return linkedValue;
+    };
+    // Actual output building
+    let output = '';
+    const keys = Object.keys(object);
+    for (let i = 0; i < keys.length; ++i) {
+      const gedKey = Object.keys(GedcomEnum).find(key => GedcomEnum[key] === keys[i]);
+      if (typeof object[keys[i]] === 'string') { // value[key] is a string, check if linked value or append to output
+        if (isLinkedValue(gedKey)) {
+          output += getLinkedValue(gedKey, object[keys[i]]);
+        } else {
+          output += `\n${depth} ${gedKey} ${object[keys[i]]}`;
+        }
+      } else { // value[key] is an object, recursive call
+        if (isLinkedValue(gedKey)) { // Let linked value handle itself
+          output += getLinkedValue(gedKey, object[keys[i]]);
+        } else { // Manually recurse call on object
+          if (object[keys[i]][keys[i]]) { // In case substructure had a super-name, set it at current level and delete substructure value
+            output += `\n${depth} ${gedKey} ${object[keys[i]][keys[i]]}`;
+            delete object[keys[i]][keys[i]];
+          } else { // Otherwise, juste add getKey into line before recursing
+            output += `\n${depth} ${gedKey}`;
+          }
+          // One depth bellow
+          output += this.__flattenObject(object[keys[i]], depth + 1);
+        }          
+      }
+    }
+
+    return output;
+  } 
 
 
   /* Getters */
