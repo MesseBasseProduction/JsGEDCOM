@@ -19,13 +19,14 @@
   "author": "Arthur Beaulieu",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@babel/core": "^7.26.8",
-    "@babel/preset-env": "^7.26.8",
-    "babel-loader": "^9.2.1",
+    "@babel/core": "^7.28.4",
+    "@babel/eslint-parser": "^7.28.6",
+    "@babel/preset-env": "^7.29.0",
+    "babel-loader": "^10.0.0",
     "clean-webpack-plugin": "^4.0.0",
-    "eslint": "^9.20.0",
+    "eslint": "^9.12.0",
     "eslint-webpack-plugin": "^4.2.0",
-    "webpack": "^5.97.1",
+    "webpack": "^5.102.1",
     "webpack-cli": "^6.0.1",
     "webpack-merge": "^6.0.1"
   }
