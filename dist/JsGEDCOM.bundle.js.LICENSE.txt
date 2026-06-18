@@ -1,0 +1,16 @@
+/** 
+   * @class
+   * @constructor
+   * @summary <h1>JsGEDCOM to handle GEDCOM documents</h1>
+   * @author Arthur Beaulieu
+   * @since February 2025
+   * @licence GPL-v3.0
+   * @description <blockquote>
+   * This class is a generic gedcom handler ; it serve three main purposes :
+   * 1. Read and store a .ged file as a gedcom structure
+   * 2. Create a gedcom structure, and allow manipulation on it
+   * 3. Export this structure or build an output file to be downloaded
+   * So far, GEDCOM versions v5.5, v5.5.1 and v7.0 are supported and are
+   * implemented here following the official GEDCOM specification .
+   * </blockquote>
+   **/
