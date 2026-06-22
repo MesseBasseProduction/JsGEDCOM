@@ -376,7 +376,7 @@ class JsGEDCOM {
    * disk as a .ged file.
    * </blockquote>
    **/
-  exportGedcom() {
+  exportGedcom(name='Output') {
     if (DEBUG === true) { console.log(`JsGEDCOM.exportGedcom() called`); }
     const gedcom = this.buildGedcom();
     const blob = new Blob([ gedcom ], {
@@ -385,7 +385,7 @@ class JsGEDCOM {
     // Virtual button to download GEDCOM file
     const virtualLink = document.createElement('a');
     virtualLink.setAttribute('href', URL.createObjectURL(blob));
-    virtualLink.setAttribute('download', 'Output.ged'); /* TODO rename output file with gedcom name if exists */
+    virtualLink.setAttribute('download', `${name}.ged`);
     virtualLink.click();
   }
 
